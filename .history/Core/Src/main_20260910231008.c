@@ -50,7 +50,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-extern void LIS3MDL_Test(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
