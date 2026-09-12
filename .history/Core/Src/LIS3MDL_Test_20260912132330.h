@@ -1,0 +1,13 @@
+/**
+ * @file    LIS3MDL_Test.c
+ * @brief   LIS3MDL 3-axis magnetometer test program.
+ * @note    Designed for STM32 HAL. SPI Mode 3 (CPOL=1, CPHA=1).
+ * @author  James Bunker
+ * @date    2026-09-10
+ */
+#ifndef TEST_H
+#define TEST_H
+
+void LIS3MDL_Test(void);
+
+#endif /* TEST_H */
