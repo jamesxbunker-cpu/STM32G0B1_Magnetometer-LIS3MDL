@@ -10,7 +10,7 @@
 
 
 
-/* =========================================================================
+ /* =========================================================================
  * Initialization
  * ========================================================================= */
 /**
@@ -20,6 +20,8 @@
  * @retval LIS3MDL_OK on success, error code otherwise.
  */
 LIS3MDL_Status_t LIS3MDL_Init(LIS3MDL_Handle_t *dev, LIS3MDL_FullScale_t fs){
+
+    dev->fs = fs;
 
     return LIS3MDL_OK;
 }
@@ -32,8 +34,12 @@ LIS3MDL_Status_t LIS3MDL_CheckID(LIS3MDL_Handle_t *dev){
 }
 
 /* =========================================================================
- * Register Access
+ * Private Helpers
  * ========================================================================= */
+
+/* =========================================================================
+*  Register Access
+*  ========================================================================= */
 /**
  * @brief  Write a single register.
  */
@@ -55,9 +61,6 @@ LIS3MDL_Status_t LIS3MDL_ReadRegs(LIS3MDL_Handle_t *dev, uint8_t reg, uint8_t *b
 
 }
 
-/* =========================================================================
- * Data Acquisition
- * ========================================================================= */
 /**
  * @brief  Read raw X/Y/Z magnetic data.
  */
@@ -79,9 +82,6 @@ LIS3MDL_Status_t LIS3MDL_ReadTemperature(LIS3MDL_Handle_t *dev, float *temp_c){
 
 }
 
-/* =========================================================================
- * Private Helpers
- * ========================================================================= */
 /**
  * @brief  Set operating mode (continuous / single / power-down).
  */
@@ -103,7 +103,6 @@ LIS3MDL_Status_t LIS3MDL_SetFullScale(LIS3MDL_Handle_t *dev, LIS3MDL_FullScale_t
 
 }
 
-
 /**
  * @brief  Check whether new data is available (STATUS_REG ZYXDA bit).
  */
@@ -117,10 +116,6 @@ bool LIS3MDL_DataReady(LIS3MDL_Handle_t *dev){
 LIS3MDL_Status_t LIS3MDL_SelfTest(LIS3MDL_Handle_t *dev, bool enable){
 
 }
-
-
-
-
 
 /*
 // Read 6 bytes starting from OUT_X_L (0x28) for X, Y, Z axes
