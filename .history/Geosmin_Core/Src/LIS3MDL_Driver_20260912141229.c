@@ -12,7 +12,7 @@
  * not a big fan of how I am currently doing it*/
 
 /* =========================================================================
- * Private Helpers
+ * Public Helpers
  * ========================================================================= */
 /**
  * @brief  Convert a full-scale enum to its sensitivity (LSB/gauss).

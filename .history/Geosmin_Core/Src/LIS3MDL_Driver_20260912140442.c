@@ -12,7 +12,7 @@
  * not a big fan of how I am currently doing it*/
 
 /* =========================================================================
- * Private Helpers
+ * HAL SPI Chip Select Helpers
  * ========================================================================= */
 /**
  * @brief  Convert a full-scale enum to its sensitivity (LSB/gauss).
@@ -209,7 +209,7 @@ LIS3MDL_Status_t LIS3MDL_ReadTemperature(LIS3MDL_Handle_t *dev, float *temp_c){
 }
 
 /* =========================================================================
- * Public Helpers
+ * Private Helpers
  * ========================================================================= */
 /**
  * @brief  Set operating mode (continuous / single / power-down).
