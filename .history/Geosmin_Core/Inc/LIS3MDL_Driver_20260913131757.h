@@ -246,7 +246,7 @@ LIS3MDL_Status_t LIS3MDL_SetODR(LIS3MDL_Handle_t *dev, LIS3MDL_ODR_t odr);
 /**
  * @brief  Set output data rate for X/Y axes.
  */
-LIS3MDL_Status_t LIS3MDL_SetFastODR(LIS3MDL_Handle_t *dev, uint8_t om);
+LIS3MDL_Status_t LIS3MDL_SetFastODR(LIS3MDL_Handle_t *dev, uint8_t om)
 
 /**
  * @brief  Set full-scale range and update sensitivity.

@@ -189,9 +189,9 @@ void LIS3MDL_Test(void)
      * ------------------------------------------------------------------- */
     printf("\r\n-- ODR change --\r\n");
     check("SetODR(10 Hz)",
-          LIS3MDL_SetODR(&dev, LIS3MDL_ODR_10Hz));
+          LIS3MDL_SetODR(&dev, LIS3MDL_ODR_10_HZ));
     check("SetODR(80 Hz)",
-          LIS3MDL_SetODR(&dev, LIS3MDL_ODR_80Hz));
+          LIS3MDL_SetODR(&dev, LIS3MDL_ODR_80_HZ));
     check("SetFastODR(UHP = 155 Hz)",
           LIS3MDL_SetFastODR(&dev, LIS3MDL_CTRL1_OM_UHP));
 

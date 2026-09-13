@@ -9,8 +9,6 @@
 #include "LIS3MDL_Test.h"
 #include "LIS3MDL_Driver.h"
 #include <stdio.h>
-#include "stm32g0xx_hal.h"
-#include "spi.h"
 
 /* =========================================================================
  * Test configuration
@@ -57,8 +55,8 @@ void LIS3MDL_Test(void)
      * ------------------------------------------------------------------- */
     LIS3MDL_Handle_t dev;
     dev.hspi    = &hspi1;          /* change to your SPI handle          */
-    dev.cs_port = SPI1_CS_GPIO_Port;
-    dev.cs_pin  = SPI1_CS_Pin;
+    dev.cs_port = LIS3MDL_CS_GPIO_Port;
+    dev.cs_pin  = LIS3MDL_CS_Pin;
     dev.fs          = LIS3MDL_FS_4G;
     dev.sensitivity = 0.0f;
 
@@ -189,9 +187,9 @@ void LIS3MDL_Test(void)
      * ------------------------------------------------------------------- */
     printf("\r\n-- ODR change --\r\n");
     check("SetODR(10 Hz)",
-          LIS3MDL_SetODR(&dev, LIS3MDL_ODR_10Hz));
+          LIS3MDL_SetODR(&dev, LIS3MDL_ODR_10_HZ));
     check("SetODR(80 Hz)",
-          LIS3MDL_SetODR(&dev, LIS3MDL_ODR_80Hz));
+          LIS3MDL_SetODR(&dev, LIS3MDL_ODR_80_HZ));
     check("SetFastODR(UHP = 155 Hz)",
           LIS3MDL_SetFastODR(&dev, LIS3MDL_CTRL1_OM_UHP));
 
