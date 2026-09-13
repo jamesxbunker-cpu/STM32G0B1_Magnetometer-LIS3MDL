@@ -261,12 +261,8 @@ void LIS3MDL_Test(void)
            (unsigned long)g_stats.fail);
     printf(" Overall: %s\r\n",
            (g_stats.fail == 0) ? "PASS" : "FAIL");
-    printf("========================================\r\n\r\n\r\n");
+    printf("========================================\r\n\n\n");
 
-
-    printf("\r\n-- Init --\r\n");
-    check("LIS3MDL_Init (FS = 4G)",
-          LIS3MDL_Init(&dev, LIS3MDL_FS_4G));
 
     printf("\r\n-- Streaming samples --\r\n");
     printf("%-8s %-8s %-8s   %-9s %-9s %-9s   %-8s\r\n", "rawX", "rawY", "rawZ", "gaussX", "gaussY", "gaussZ", "tempC");

@@ -261,12 +261,8 @@ void LIS3MDL_Test(void)
            (unsigned long)g_stats.fail);
     printf(" Overall: %s\r\n",
            (g_stats.fail == 0) ? "PASS" : "FAIL");
-    printf("========================================\r\n\r\n\r\n");
+    printf("========================================\r\n\n\n");
 
-
-    printf("\r\n-- Init --\r\n");
-    check("LIS3MDL_Init (FS = 4G)",
-          LIS3MDL_Init(&dev, LIS3MDL_FS_4G));
 
     printf("\r\n-- Streaming samples --\r\n");
     printf("%-8s %-8s %-8s   %-9s %-9s %-9s   %-8s\r\n", "rawX", "rawY", "rawZ", "gaussX", "gaussY", "gaussZ", "tempC");
@@ -275,14 +271,14 @@ void LIS3MDL_Test(void)
 
         LIS3MDL_AxesRaw_t  raw;
         LIS3MDL_AxesFloat_t gauss;
-        float temp1_c = 0.0f;
+        float temp_c = 0.0f;
 
         LIS3MDL_Status_t s = LIS3MDL_ReadMagRaw(&dev, &raw);
         if (s == LIS3MDL_OK) {
             s = LIS3MDL_ReadMagGauss(&dev, &gauss);
         }
         if (s == LIS3MDL_OK) {
-            s = LIS3MDL_ReadTemperature(&dev, &temp1_c);
+            s = LIS3MDL_ReadTemperature(&dev, &temp_c);
         }
 
         if (s == LIS3MDL_OK) {
@@ -293,7 +289,7 @@ void LIS3MDL_Test(void)
             print_fixed(gauss.y, 10000); printf("   ");
             print_fixed(gauss.z, 10000); printf("   ");
 
-            print_fixed(temp1_c, 100); printf("\r\n");
+            print_fixed(temp_c, 100); printf("\r\n");
         } else {
             printf("read failed (status=%d)\r\n", (int)s);
         }
