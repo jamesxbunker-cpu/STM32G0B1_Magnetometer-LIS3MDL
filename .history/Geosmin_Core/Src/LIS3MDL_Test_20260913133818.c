@@ -48,20 +48,6 @@ int _write(int file, char *ptr, int len)
     return len;
 }
 
-int _write_r(struct _reent *r, int file, const void *ptr, size_t len)
-{
-    (void)r;
-    HAL_UART_Transmit(&huart2, (uint8_t *)ptr, len, HAL_MAX_DELAY);
-    return (int)len;
-}
-
-int __io_putchar(int ch)
-{
-    uint8_t c = (uint8_t)ch;
-    HAL_UART_Transmit(&huart2, &c, 1, HAL_MAX_DELAY);
-    return ch;
-}
-
 /* =========================================================================
  * Public entry point
  * ========================================================================= */

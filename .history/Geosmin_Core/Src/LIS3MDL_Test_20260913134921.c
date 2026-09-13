@@ -40,7 +40,7 @@ static void check(const char *name, LIS3MDL_Status_t s)
     }
 }
 
-extern UART_HandleTypeDef huart2; // This should match what CubeMX generates
+extern huart2; // This should match what CubeMX generates
 
 int _write(int file, char *ptr, int len)
 {
@@ -67,6 +67,11 @@ int __io_putchar(int ch)
  * ========================================================================= */
 void LIS3MDL_Test(void)
 {
+    uint8_t raw_msg[] = "RAW BYPASS TEST\r\n";
+    for (int k = 0; k < 5; k++) {
+        HAL_UART_Transmit(&huart2, raw_msg, sizeof(raw_msg) - 1, 1000);
+        HAL_Delay(200);
+    }
     HAL_Delay(1000);  /* wait for peripherals to stabilize */
     printf("\r\n");
     printf("========================================\r\n");

@@ -4,7 +4,7 @@
  * @note    Designed for STM32 HAL. SPI Mode 3 (CPOL=1, CPHA=1).
  * @author  James Bunker
  * @date    2026-09-10
- * @note & "D:\STM32CubeProgrammer\bin\STM32_Programmer_CLI.exe" -c port=SWD mode=UR -w "D:/VS_Code/STM32G0B1_Magnetometer-LIS3MDL/build/Debug/STM32G0B1_Magnetometer-LIS3DH.elf" -v -rst
+ * @program & "D:\STM32CubeProgrammer\bin\STM32_Programmer_CLI.exe" -c port=SWD mode=UR -w "D:/VS_Code/STM32G0B1_Magnetometer-LIS3MDL/build/Debug/STM32G0B1_Magnetometer-LIS3DH.elf" -v -rst
  */
 
 #include "LIS3MDL_Test.h"
@@ -46,20 +46,6 @@ int _write(int file, char *ptr, int len)
 {
     HAL_UART_Transmit(&huart2, (uint8_t *)ptr, len, HAL_MAX_DELAY);
     return len;
-}
-
-int _write_r(struct _reent *r, int file, const void *ptr, size_t len)
-{
-    (void)r;
-    HAL_UART_Transmit(&huart2, (uint8_t *)ptr, len, HAL_MAX_DELAY);
-    return (int)len;
-}
-
-int __io_putchar(int ch)
-{
-    uint8_t c = (uint8_t)ch;
-    HAL_UART_Transmit(&huart2, &c, 1, HAL_MAX_DELAY);
-    return ch;
 }
 
 /* =========================================================================

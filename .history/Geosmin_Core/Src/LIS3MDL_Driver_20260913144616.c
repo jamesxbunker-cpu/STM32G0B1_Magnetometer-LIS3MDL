@@ -212,7 +212,8 @@ LIS3MDL_Status_t LIS3MDL_ReadReg(LIS3MDL_Handle_t *dev, uint8_t reg, uint8_t *va
     }
 
     uint8_t tx[2] = {
-        (uint8_t)(LIS3MDL_SPI_READ | LIS3MDL_SPI_SINGLE | (reg & 0x3FU)),
+        (uint8_t)(((reg << LIS3MDL_SPI_ADDR_SHIFT) & LIS3MDL_SPI_ADDR_MASK)
+                  | LIS3MDL_SPI_READ_BIT),   /* R/W=1, MS=0 */
         0x00
     };
     uint8_t rx[2] = { 0 };
@@ -245,7 +246,9 @@ LIS3MDL_Status_t LIS3MDL_ReadRegs(LIS3MDL_Handle_t *dev, uint8_t reg, uint8_t *b
         return LIS3MDL_ERR;
     }
 
-    uint8_t cmd = (uint8_t)(LIS3MDL_SPI_READ | LIS3MDL_SPI_AUTO_INC | (reg & 0x3FU));
+    uint8_t cmd = (uint8_t)(((reg << LIS3MDL_SPI_ADDR_SHIFT) & LIS3MDL_SPI_ADDR_MASK)
+                        | LIS3MDL_SPI_AUTO_INC
+                        | LIS3MDL_SPI_READ_BIT);
 
     LIS3MDL_Status_t status = LIS3MDL_CS_Low(dev);
     if (status != LIS3MDL_OK) {
