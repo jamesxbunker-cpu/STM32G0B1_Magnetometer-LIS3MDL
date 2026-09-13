@@ -19,27 +19,6 @@
 #define LIS3MDL_TEST_ITERATIONS  10U     /* how many samples to print */
 #define LIS3MDL_TEST_DELAY_MS    200U    /* delay between samples      */
 
-/* Print a float as ±NN.NNNN without relying on newlib float printf.
- * Handles negatives correctly.  'scale' is the number of decimal places
- * expressed as a power of 10 (e.g. 10000 for 4 places, 100 for 2). */
-static void print_fixed(float v, unsigned scale)
-{
-    int neg = (v < 0.0f);
-    if (neg) v = -v;
-
-    /* Convert to integer with the given scale, with rounding. */
-    long scaled = (long)(v * (float)scale + 0.5f);
-    long whole  = scaled / (long)scale;
-    long frac   = scaled % (long)scale;
-
-    /* Number of digits needed for the fractional part. */
-    unsigned digits = 0;
-    unsigned s = scale;
-    while (s > 1) { s /= 10; digits++; }
-
-    printf("%s%ld.%0*ld", neg ? "-" : "", whole, (int)digits, frac);
-}
-
 /* =========================================================================
  * Test result counters
  * ========================================================================= */
