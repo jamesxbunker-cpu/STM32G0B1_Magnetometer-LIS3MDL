@@ -13,6 +13,7 @@
  #define LIS3MDL_SPI_TIMEOUT 100  // Timeout for SPI transactions (ms)
 /* --- SPI framing: bit0 = R/W, bit1 = MS (auto-increment), bits2..7 = AD(5:0) --- */
 #define LIS3MDL_SPI_READ_BIT    0x01U
+#define LIS3MDL_SPI_AUTO_INC    0x02U
 #define LIS3MDL_SPI_ADDR_SHIFT  2U
 #define LIS3MDL_SPI_ADDR_MASK   0xFCU
 
@@ -384,17 +385,10 @@ LIS3MDL_Status_t LIS3MDL_SetMode(LIS3MDL_Handle_t *dev, LIS3MDL_Mode_t mode){
     return LIS3MDL_WriteReg(dev, LIS3MDL_CTRL_REG3, ctrl3);
 }
 
-
 /**
- * @brief  Set the low-rate output data rate (DO[2:0] in CTRL_REG1).
- * @note   Only valid when FAST_ODR = 0 (ODR 0.625–80 Hz, Table 21).
- *         This function clears FAST_ODR to guarantee the DO field is
- *         the one driving the ODR.  For the 155–1000 Hz rates you must
- *         use LIS3MDL_SetFastODR() instead, which repurposes the OM
- *         field to select the rate (Table 19).
+ * @brief  Set output data rate for X/Y axes.
  */
-LIS3MDL_Status_t LIS3MDL_SetODR(LIS3MDL_Handle_t *dev, LIS3MDL_ODR_t odr)
-{
+LIS3MDL_Status_t LIS3MDL_SetODR(LIS3MDL_Handle_t *dev, LIS3MDL_ODR_t odr){
     if (dev == NULL) {
         return LIS3MDL_ERR;
     }
@@ -405,54 +399,20 @@ LIS3MDL_Status_t LIS3MDL_SetODR(LIS3MDL_Handle_t *dev, LIS3MDL_ODR_t odr)
         return status;
     }
 
-    /* Set DO[2:0] */
     ctrl1 &= (uint8_t)~LIS3MDL_CTRL1_DO_MASK;
-    ctrl1 |= (uint8_t)(((uint8_t)odr << LIS3MDL_CTRL1_DO_SHIFT)
-                       & LIS3MDL_CTRL1_DO_MASK);
+    ctrl1 |= (uint8_t)(((uint8_t)odr << LIS3MDL_CTRL1_DO_SHIFT) & LIS3MDL_CTRL1_DO_MASK);
 
-    /* Make sure FAST_ODR is 0 so DO drives the rate */
-    ctrl1 &= (uint8_t)~LIS3MDL_CTRL1_FAST_ODR;
+    /* FAST_ODR bit: set if ODR > 80 Hz, clear otherwise */
+    if ((uint8_t)odr > (uint8_t)LIS3MDL_ODR_80_HZ) {
+        ctrl1 |= LIS3MDL_CTRL1_FAST_ODR;
+    } else {
+        ctrl1 &= (uint8_t)~LIS3MDL_CTRL1_FAST_ODR;
+    }
 
     return LIS3MDL_WriteReg(dev, LIS3MDL_CTRL_REG1, ctrl1);
-}
-
-/**
- * @brief  Set a high-rate ODR (155–1000 Hz) via FAST_ODR + OM[1:0].
- * @note   Table 19: when FAST_ODR = 1, OM[1:0] selects the rate and
- *         DO[2:0] is ignored.  The OM field also controls the X/Y
- *         performance mode, so this call overwrites it — that is
- *         inherent to the part, not a limitation of this driver.
- * @param  om   one of LIS3MDL_CTRL1_OM_LP / MP / HP / UHP, corresponding
- *              to 1000 / 560 / 300 / 155 Hz respectively.
- */
-LIS3MDL_Status_t LIS3MDL_SetFastODR(LIS3MDL_Handle_t *dev, uint8_t om)
-{
-    if (dev == NULL) {
+        if (dev == NULL) {
         return LIS3MDL_ERR;
     }
-
-    /* om must be one of the four OM[1:0] bit patterns already shifted */
-    switch (om) {
-        case LIS3MDL_CTRL1_OM_LP:
-        case LIS3MDL_CTRL1_OM_MP:
-        case LIS3MDL_CTRL1_OM_HP:
-        case LIS3MDL_CTRL1_OM_UHP:
-            break;
-        default:
-            return LIS3MDL_ERR;
-    }
-
-    uint8_t ctrl1 = 0;
-    LIS3MDL_Status_t status = LIS3MDL_ReadReg(dev, LIS3MDL_CTRL_REG1, &ctrl1);
-    if (status != LIS3MDL_OK) {
-        return status;
-    }
-
-    ctrl1 &= (uint8_t)~LIS3MDL_CTRL1_OM_MASK;
-    ctrl1 |= om;
-    ctrl1 |= LIS3MDL_CTRL1_FAST_ODR;
-
-    return LIS3MDL_WriteReg(dev, LIS3MDL_CTRL_REG1, ctrl1);
 }
 
 /**

@@ -46,11 +46,11 @@
  * ========================================================================= */
 #define LIS3MDL_CTRL1_TEMP_EN       (1 << 7)        /* Enable Temperature Sensor    */
 #define LIS3MDL_CTRL1_OM_MASK       (0x07 << 5)     /* X/Y operative mode           */
+#define LIS3MDL_CTRL1_DO_SHIFT      (2U)    
 #define LIS3MDL_CTRL1_OM_LP         (0x00 << 5)     /* Low-power                    */
 #define LIS3MDL_CTRL1_OM_MP         (0x01 << 5)     /* Medium-power                 */
 #define LIS3MDL_CTRL1_OM_HP         (0x02 << 5)     /* High-power                   */
 #define LIS3MDL_CTRL1_OM_UHP        (0x03 << 5)     /* Ultra-high-power             */
-#define LIS3MDL_CTRL1_DO_SHIFT      (2U)    
 #define LIS3MDL_CTRL1_DO_MASK       (0x07 << 2)     /* X/Y ODR                      */
 #define LIS3MDL_CTRL1_FAST_ODR      (1 << 1)        /* Fast ODR Enabled             */        
 #define LIS3MDL_CTRL1_ST            (1 << 0)        /* Self-test                    */

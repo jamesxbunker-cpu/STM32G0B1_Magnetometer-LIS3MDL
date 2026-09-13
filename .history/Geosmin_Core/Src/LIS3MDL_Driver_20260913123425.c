@@ -13,6 +13,7 @@
  #define LIS3MDL_SPI_TIMEOUT 100  // Timeout for SPI transactions (ms)
 /* --- SPI framing: bit0 = R/W, bit1 = MS (auto-increment), bits2..7 = AD(5:0) --- */
 #define LIS3MDL_SPI_READ_BIT    0x01U
+#define LIS3MDL_SPI_AUTO_INC    0x02U
 #define LIS3MDL_SPI_ADDR_SHIFT  2U
 #define LIS3MDL_SPI_ADDR_MASK   0xFCU
 
@@ -330,7 +331,7 @@ LIS3MDL_Status_t LIS3MDL_ReadTemperature(LIS3MDL_Handle_t *dev, float *temp_c){
     }
 
     uint8_t buf[2] = { 0 };
-    LIS3MDL_Status_t status = LIS3MDL_ReadRegs(dev, LIS3MDL_TEMP_OUT_L, buf, 2);
+    LIS3MDL_Status_t status = LIS3MDL_ReadRegs(dev, LIS3MDL_OUT_TEMP_L, buf, 2);
     if (status != LIS3MDL_OK) {
         return status;
     }
@@ -350,7 +351,7 @@ LIS3MDL_Status_t LIS3MDL_ReadTemperature(LIS3MDL_Handle_t *dev, float *temp_c){
  * ========================================================================= */
 /**
  * @brief  Set operating mode (continuous / single / power-down).
- * @note   MD bits live in CTRL_REG3[1:0].
+ * @note   MD bits live in CTRL_REG3[1:0] for X/Y and in CTRL_REG1[0] for Z.
  *         For a proper single-shot, both must be set to single mode.
  */
 LIS3MDL_Status_t LIS3MDL_SetMode(LIS3MDL_Handle_t *dev, LIS3MDL_Mode_t mode){
@@ -373,28 +374,37 @@ LIS3MDL_Status_t LIS3MDL_SetMode(LIS3MDL_Handle_t *dev, LIS3MDL_Mode_t mode){
         case LIS3MDL_MODE_SINGLE:
             ctrl3 |= LIS3MDL_CTRL3_MD_SINGLE;
             break;
-        case LIS3MDL_MODE_POWERDOWN:
-            ctrl3 |= LIS3MDL_CTRL3_MD_PD;
-            break;
+        case LIS3MDL_MODE_POWER_DOWN:
         default:
-            ctrl3 |= LIS3MDL_CTRL3_MD_PD;
+            ctrl3 |= LIS3MDL_CTRL3_MD_POWER_DOWN;
             break;
     }
 
-    return LIS3MDL_WriteReg(dev, LIS3MDL_CTRL_REG3, ctrl3);
+    status = LIS3MDL_WriteReg(dev, LIS3MDL_CTRL_REG3, ctrl3);
+    if (status != LIS3MDL_OK) {
+        return status;
+    }
+
+    /* Z-axis mode lives in CTRL_REG1[0] (MD[0] of the Z mode field is bit0) */
+    uint8_t ctrl1 = 0;
+    status = LIS3MDL_ReadReg(dev, LIS3MDL_CTRL_REG1, &ctrl1);
+    if (status != LIS3MDL_OK) {
+        return status;
+    }
+
+    if (mode == LIS3MDL_MODE_SINGLE) {
+        ctrl1 |= LIS3MDL_CTRL1_MD_Z_SINGLE;   /* bit0 = 1 */
+    } else {
+        ctrl1 &= (uint8_t)~LIS3MDL_CTRL1_MD_Z_SINGLE;
+    }
+
+    return LIS3MDL_WriteReg(dev, LIS3MDL_CTRL_REG1, ctrl1);
 }
 
-
 /**
- * @brief  Set the low-rate output data rate (DO[2:0] in CTRL_REG1).
- * @note   Only valid when FAST_ODR = 0 (ODR 0.625–80 Hz, Table 21).
- *         This function clears FAST_ODR to guarantee the DO field is
- *         the one driving the ODR.  For the 155–1000 Hz rates you must
- *         use LIS3MDL_SetFastODR() instead, which repurposes the OM
- *         field to select the rate (Table 19).
+ * @brief  Set output data rate for X/Y axes.
  */
-LIS3MDL_Status_t LIS3MDL_SetODR(LIS3MDL_Handle_t *dev, LIS3MDL_ODR_t odr)
-{
+LIS3MDL_Status_t LIS3MDL_SetODR(LIS3MDL_Handle_t *dev, LIS3MDL_ODR_t odr){
     if (dev == NULL) {
         return LIS3MDL_ERR;
     }
@@ -405,54 +415,20 @@ LIS3MDL_Status_t LIS3MDL_SetODR(LIS3MDL_Handle_t *dev, LIS3MDL_ODR_t odr)
         return status;
     }
 
-    /* Set DO[2:0] */
     ctrl1 &= (uint8_t)~LIS3MDL_CTRL1_DO_MASK;
-    ctrl1 |= (uint8_t)(((uint8_t)odr << LIS3MDL_CTRL1_DO_SHIFT)
-                       & LIS3MDL_CTRL1_DO_MASK);
+    ctrl1 |= (uint8_t)(((uint8_t)odr << LIS3MDL_CTRL1_DO_SHIFT) & LIS3MDL_CTRL1_DO_MASK);
 
-    /* Make sure FAST_ODR is 0 so DO drives the rate */
-    ctrl1 &= (uint8_t)~LIS3MDL_CTRL1_FAST_ODR;
+    /* FAST_ODR bit: set if ODR > 80 Hz, clear otherwise */
+    if ((uint8_t)odr > (uint8_t)LIS3MDL_ODR_80_HZ) {
+        ctrl1 |= LIS3MDL_CTRL1_FAST_ODR;
+    } else {
+        ctrl1 &= (uint8_t)~LIS3MDL_CTRL1_FAST_ODR;
+    }
 
     return LIS3MDL_WriteReg(dev, LIS3MDL_CTRL_REG1, ctrl1);
-}
-
-/**
- * @brief  Set a high-rate ODR (155–1000 Hz) via FAST_ODR + OM[1:0].
- * @note   Table 19: when FAST_ODR = 1, OM[1:0] selects the rate and
- *         DO[2:0] is ignored.  The OM field also controls the X/Y
- *         performance mode, so this call overwrites it — that is
- *         inherent to the part, not a limitation of this driver.
- * @param  om   one of LIS3MDL_CTRL1_OM_LP / MP / HP / UHP, corresponding
- *              to 1000 / 560 / 300 / 155 Hz respectively.
- */
-LIS3MDL_Status_t LIS3MDL_SetFastODR(LIS3MDL_Handle_t *dev, uint8_t om)
-{
-    if (dev == NULL) {
+        if (dev == NULL) {
         return LIS3MDL_ERR;
     }
-
-    /* om must be one of the four OM[1:0] bit patterns already shifted */
-    switch (om) {
-        case LIS3MDL_CTRL1_OM_LP:
-        case LIS3MDL_CTRL1_OM_MP:
-        case LIS3MDL_CTRL1_OM_HP:
-        case LIS3MDL_CTRL1_OM_UHP:
-            break;
-        default:
-            return LIS3MDL_ERR;
-    }
-
-    uint8_t ctrl1 = 0;
-    LIS3MDL_Status_t status = LIS3MDL_ReadReg(dev, LIS3MDL_CTRL_REG1, &ctrl1);
-    if (status != LIS3MDL_OK) {
-        return status;
-    }
-
-    ctrl1 &= (uint8_t)~LIS3MDL_CTRL1_OM_MASK;
-    ctrl1 |= om;
-    ctrl1 |= LIS3MDL_CTRL1_FAST_ODR;
-
-    return LIS3MDL_WriteReg(dev, LIS3MDL_CTRL_REG1, ctrl1);
 }
 
 /**
@@ -506,7 +482,7 @@ bool LIS3MDL_DataReady(LIS3MDL_Handle_t *dev){
  * @brief  Internal helper to enable/disable self-test while preserving
  *         the Z-axis operating mode (MD_Z) in CTRL_REG1[0].
  */
-LIS3MDL_Status_t LIS3MDL_SelfTestEnable(LIS3MDL_Handle_t *dev, bool enable)
+static LIS3MDL_Status_t LIS3MDL_SelfTestEnable(LIS3MDL_Handle_t *dev, bool enable)
 {
     uint8_t ctrl1 = 0;
     LIS3MDL_Status_t s = LIS3MDL_ReadReg(dev, LIS3MDL_CTRL_REG1, &ctrl1);
@@ -530,47 +506,75 @@ LIS3MDL_Status_t LIS3MDL_SelfTestEnable(LIS3MDL_Handle_t *dev, bool enable)
  */
 LIS3MDL_Status_t LIS3MDL_SelfTest(LIS3MDL_Handle_t *dev)
 {
-    if (dev == NULL) return LIS3MDL_ERR;
-
-    if (LIS3MDL_SelfTestEnable(dev, true) != LIS3MDL_OK) return LIS3MDL_ERR;
-    HAL_Delay(60);
-
-    /* Discard first sample (AN4602 Figure 6) */
-    LIS3MDL_AxesRaw_t raw;
-    if (LIS3MDL_ReadMagRaw(dev, &raw) != LIS3MDL_OK) {
-        LIS3MDL_SelfTestEnable(dev, false);
+    if (dev == NULL) {
         return LIS3MDL_ERR;
     }
 
-    /* Average 5 samples */
-    int32_t sx = 0, sy = 0, sz = 0;
-    for (uint8_t i = 0; i < 5; i++) {
-        uint32_t to = 0;
+    /* --- 1. Enable Self-Test --- */
+    LIS3MDL_Status_t status = LIS3MDL_SelfTestEnable(dev, true);
+    if (status != LIS3MDL_OK) {
+        return status;
+    }
+
+    /* --- 2. Wait for settling --- */
+    HAL_Delay(60); /* AN4602: wait 60 ms */
+
+    /* --- 3. Discard the first measurement --- */
+    LIS3MDL_AxesRaw_t raw;
+    status = LIS3MDL_ReadMagRaw(dev, &raw);
+    if (status != LIS3MDL_OK) {
+        LIS3MDL_SelfTestEnable(dev, false);
+        return status;
+    }
+
+    /* --- 4. Take 5 measurements and average them --- */
+    int32_t sum_x = 0, sum_y = 0, sum_z = 0;
+    const uint8_t num_samples = 5;
+
+    for (uint8_t i = 0; i < num_samples; i++) {
+        /* Wait for new data using the DataReady helper */
+        uint32_t timeout = 0;
         while (!LIS3MDL_DataReady(dev)) {
-            if (++to > 100000U) {
+            if (++timeout > 10000) { /* ~10k polls should be plenty */
                 LIS3MDL_SelfTestEnable(dev, false);
                 return LIS3MDL_ERR;
             }
         }
-        if (LIS3MDL_ReadMagRaw(dev, &raw) != LIS3MDL_OK) {
+
+        status = LIS3MDL_ReadMagRaw(dev, &raw);
+        if (status != LIS3MDL_OK) {
             LIS3MDL_SelfTestEnable(dev, false);
-            return LIS3MDL_ERR;
+            return status;
         }
-        sx += raw.x; sy += raw.y; sz += raw.z;
+
+        sum_x += raw.x;
+        sum_y += raw.y;
+        sum_z += raw.z;
     }
 
+    /* --- 5. Disable self-test --- */
     LIS3MDL_SelfTestEnable(dev, false);
 
-    float ax = (float)sx / 5.0f / dev->sensitivity;
-    float ay = (float)sy / 5.0f / dev->sensitivity;
-    float az = (float)sz / 5.0f / dev->sensitivity;
-    if (ax < 0) ax = -ax;
-    if (ay < 0) ay = -ay;
-    if (az < 0) az = -az;
+    /* --- 6. Calculate averages and convert to gauss --- */
+    float avg_x = ((float)sum_x / num_samples) / dev->sensitivity;
+    float avg_y = ((float)sum_y / num_samples) / dev->sensitivity;
+    float avg_z = ((float)sum_z / num_samples) / dev->sensitivity;
 
-    if (ax < LIS3MDL_ST_X_MIN || ax > LIS3MDL_ST_X_MAX) return LIS3MDL_ERR;
-    if (ay < LIS3MDL_ST_Y_MIN || ay > LIS3MDL_ST_Y_MAX) return LIS3MDL_ERR;
-    if (az < LIS3MDL_ST_Z_MIN || az > LIS3MDL_ST_Z_MAX) return LIS3MDL_ERR;
+    /* Use absolute values as per AN4602 */
+    avg_x = (avg_x < 0) ? -avg_x : avg_x;
+    avg_y = (avg_y < 0) ? -avg_y : avg_y;
+    avg_z = (avg_z < 0) ? -avg_z : avg_z;
+
+    /* --- 7. Validate against limits --- */
+    if (avg_x < LIS3MDL_ST_X_MIN || avg_x > LIS3MDL_ST_X_MAX) {
+        return LIS3MDL_ERR;
+    }
+    if (avg_y < LIS3MDL_ST_Y_MIN || avg_y > LIS3MDL_ST_Y_MAX) {
+        return LIS3MDL_ERR;
+    }
+    if (avg_z < LIS3MDL_ST_Z_MIN || avg_z > LIS3MDL_ST_Z_MAX) {
+        return LIS3MDL_ERR;
+    }
 
     return LIS3MDL_OK;
 }

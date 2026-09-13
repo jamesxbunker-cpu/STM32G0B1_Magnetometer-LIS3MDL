@@ -13,6 +13,7 @@
  #define LIS3MDL_SPI_TIMEOUT 100  // Timeout for SPI transactions (ms)
 /* --- SPI framing: bit0 = R/W, bit1 = MS (auto-increment), bits2..7 = AD(5:0) --- */
 #define LIS3MDL_SPI_READ_BIT    0x01U
+#define LIS3MDL_SPI_AUTO_INC    0x02U
 #define LIS3MDL_SPI_ADDR_SHIFT  2U
 #define LIS3MDL_SPI_ADDR_MASK   0xFCU
 
