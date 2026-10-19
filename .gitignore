@@ -7,6 +7,9 @@ build/
 *.o
 *.d
 
+# git history
+.history/
+
 # VS Code personal settings
 .vscode/settings.json
 .vscode/*.log
